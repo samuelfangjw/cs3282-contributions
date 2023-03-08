@@ -1,7 +1,6 @@
 import fs from "fs";
 import issues from "./issues.json" assert { type: "json" };
 import reviews from "./reviews.json" assert { type: "json" };
-import reviewIssues from "./review-issues.json" assert { type: "json" };
 
 const weeks = [
   "1",
@@ -70,21 +69,19 @@ const generateRows = () => {
   }
 
   const sortedReviews = reviews.sort((a, b) =>
-    a.created_at > b.created_at ? -1 : 1
+    a.submitted_at > b.submitted_at ? -1 : 1
   );
 
   const seen = new Set();
 
   for (const review of sortedReviews) {
-    const url = review.pull_request_url;
-    if (seen.has(url)) {
+    if (seen.has(review.number)) {
       continue;
     }
-    seen.add(url);
+    seen.add(review.number);
 
-    const issue = reviewIssues[url];
-    const date = review.created_at;
-    const description = `Reviewed PR: [${issue.title.trim()} #${issue.number}](${issue.html_url})`;
+    const date = review.submitted_at;
+    const description = `Reviewed PR: [${review.title.trim()} #${review.number}](${review.pr_html_url})`;
     rows.push([date, description]);
   }
 

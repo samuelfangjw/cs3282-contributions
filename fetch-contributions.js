@@ -27,32 +27,59 @@ const getContributions = async () => {
   fs.writeFileSync("./issues.json", JSON.stringify(issues));
 
   // fetch PRs reviewed by user
-  let reviews = await octokit.paginate(
-    octokit.rest.pulls.listReviewCommentsForRepo,
+  let prs = await octokit.paginate(
+    octokit.rest.pulls.list,
     {
       owner: "TEAMMATES",
       repo: "TEAMMATES",
-      since: config.since,
+      state: "closed",
+      direction: "desc",
+      sort: "updated",
+      per_page: 100,
     },
-    (res) => res.data.filter((review) => review.user.login == config.username)
+    (res, done) => {
+      const updatedAt = res.data[0].updated_at;
+      if (updatedAt < config.since) {
+        done();
+      }
+      return res.data;
+    }
   );
 
-  fs.writeFileSync("./reviews.json", JSON.stringify(reviews));
+  let reviews = [];
+  for (const pr of prs) {
+    // too lazy to handle API rate limits
+    // just go slow and hope there are no errors :)
+    let toAdd = await octokit.paginate(
+      octokit.rest.pulls.listReviews,
+      {
+        owner: "TEAMMATES",
+        repo: "TEAMMATES",
+        pull_number: pr.number,
+      },
+      (res) => {
+        const data = res.data.filter(
+          (review) =>
+            review.user.login == config.username &&
+            review.submitted_at >= config.since
+        );
 
-  // get issue corresponding to review comment
-  const reviewIssues = {}
+        data.forEach((d) => {
+          d["title"] = pr.title;
+          d["number"] = pr.number;
+          d["pr_html_url"] = pr.html_url;
+        });
 
-  for (const review of reviews) {
-    const url = review.pull_request_url;
-    if (url in reviewIssues) {
-      continue;
+        return data;
+      }
+    );
+    
+    for (const d of toAdd) {
+      reviews.push(d);
     }
-
-    const issue = await octokit.request(url);
-    reviewIssues[url] = issue.data;
   }
-  
-  fs.writeFileSync("./review-issues.json", JSON.stringify(reviewIssues));
+
+  fs.writeFileSync("./reviews.json", JSON.stringify(reviews));
 };
 
 getContributions();
