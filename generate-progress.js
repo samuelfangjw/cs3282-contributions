@@ -42,7 +42,10 @@ const sanitizeRow = (row) => {
     // don't run this after reading wk :)
   }
 
-  const sanitizedDescription = description.replace(/\[\[\#([^\]]+)\]\s/, "[");
+  const sanitizedDescription = description
+    .replace(/\[\[\#([^\]]+)\]\s/, "[") // if it works it works
+    .replace('<', "\\<")
+    .replace('>', '\\>');
 
   return [sanitizedDate, sanitizedDescription];
 };
