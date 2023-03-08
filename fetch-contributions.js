@@ -2,6 +2,8 @@ import fs from "fs";
 import config from "./config.js";
 import { Octokit } from "octokit";
 
+console.log(config);
+
 const octokit = new Octokit({
   auth: config.github_token,
 });
