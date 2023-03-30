@@ -9,5 +9,5 @@ Script to generate progress page details.
 
 ## Usage
 
-- Step 1: `node fetch-contributions` to fetch all contributions from github.
+- Step 1: `node fetch-contributions` to fetch all contributions from github. This might take awhile, go make some coffee :)
 - Step 2: `node generate-progess` to generate progress page.
